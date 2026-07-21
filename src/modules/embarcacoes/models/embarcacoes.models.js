@@ -1,4 +1,3 @@
-import { conexao } from "pg";
 import conexao from "../../../config/database.js"
 
 class EmbarcacoesModel {

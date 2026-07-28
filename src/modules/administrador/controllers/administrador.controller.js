@@ -45,7 +45,7 @@ class AdministradorController {
       }
       const salt = bcrypt.genSaltSync(10);
       const hashSenha = bcrypt.hashSync(senha, salt);
-      const adminstrador = await AdministradorModel.cadastrar(
+      await AdministradorModel.cadastrar(
         id,
         nome,
         nome,
@@ -73,11 +73,11 @@ class AdministradorController {
   },
   process.env.JWT_SECRET,
   {
-    expiresIn: process.env.JWT_TEMPO_EXPIRADO || "1H",
+    expiresIn: process.env.JWT_TEMPO_EXPIRADO
   }
 );
       const { email, senha } = req.body;
-      if (!email || senha) {
+      if (!email || !senha) {
         return res
           .status(403)
           .json({ mensagem: "Forneça o email e senha para login" });
@@ -97,6 +97,9 @@ class AdministradorController {
         return res.status(403).json({ mensagem: "email ou senha incorreta!" });
       }
     } catch (error) {}
+  }
+  static async perfil(req, res){
+    
   }
 }
 export default AdministradorController

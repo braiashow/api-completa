@@ -1,4 +1,4 @@
-import EmbarcacoesModel from "../models/embarcacoes.models";
+import EmbarcacoesModel from "../models/embarcacoes.models.js";
 
 
 class EmbarcacoesController {

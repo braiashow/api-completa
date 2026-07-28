@@ -1,4 +1,4 @@
-import router from "./modules/embarcacoes/routes/embarcacoes.route"
+import router from "./modules/embarcacoes/routes/embarcacoes.route.js"
 import express from "express";
 import dotenv from "dotenv";
 
@@ -6,6 +6,9 @@ dotenv.config();
 const app = express();
 
 app.use(express.json());
+// registrando rotas do módulo de tarefas
+app.use("/embarcacoes",router);
+app.use("/admin",routerAdmin);
 
 const porta = process.env.PORTA;
 
@@ -28,5 +31,3 @@ app.get("/", (req, res) => {
 app.listen(porta, () => {
   console.log(`Servidor rodando na porta ${porta}`);
 });
-// registrando rotas do módulo de tarefas
-app.use(router);

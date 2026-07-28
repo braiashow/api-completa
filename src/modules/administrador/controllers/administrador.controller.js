@@ -1,5 +1,4 @@
-import bcrypt, { compareSync } from "bcrypt";
-
+import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 import AdministradorModel from "../models/administrador.model.js";
@@ -15,91 +14,155 @@ class AdministradorController {
         });
       }
 
+      if (senha.length < 8) {
+        return res.status(400).json({
+          mensagem: "A senha de administrador precisa ter no mínimo 8 caracteres",
+        });
+      }
+
+      const regexSenha =
+        /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,32}$/;
+
+      if (!regexSenha.test(senha)) {
+        return res.status(400).json({
+          mensagem:
+            "Senha inválida! A senha deve conter pelo menos uma letra maiúscula, uma letra minúscula, um número e um caractere especial.",
+        });
+      }
+
+      const regexEmail =
+        /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+$/;
+
+      if (!regexEmail.test(email)) {
+        return res.status(400).json({
+          mensagem: "E-mail inválido",
+        });
+      }
+
       const totalAdmin = await AdministradorModel.contarAdmins();
 
       if (totalAdmin > 0) {
         return res.status(409).json({
-          mensagem: "Esse administrador já existe",
+          mensagem: "Já existe um administrador cadastrado",
         });
       }
-      if (senha.length < 8) {
-        return resposta.status(403).json({
-          mensagem: "A senha de admin precisa ter no minimo 8 caracteres",
-        });
-      }
-      const regex =
-        /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,32}$/;
 
-      if (!regex.test(senha)) {
-        return res.status(403).json({
-          mensagem:
-            "Senha invalida! Sua senha deve conter pelo menos: 1 letra maiúscula, 1 letra minúscula, 1 número, 1 caractere especial (ex: @, #, $, %)",
-        });
-      }
-      const regexEmail =
-        /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+$/;
-      if (!regexEmail.test(email)) {
-        return res.status(403).json({
-          mensagem: "Email invalido",
-        });
-      }
-      const salt = bcrypt.genSaltSync(10);
-      const hashSenha = bcrypt.hashSync(senha, salt);
+      const hashSenha = await bcrypt.hash(senha, 10);
+
       await AdministradorModel.cadastrar(
         id,
         nome,
-        nome,
-        (senha = hashSenha),
+        email,
+        hashSenha,
       );
-      return res
-        .status(201)
-        .json({ mensagem: "Usuário cadastrado com sucesso" });
 
-      // lógica para cadastrar o administrador
+      return res.status(201).json({
+        mensagem: "Administrador cadastrado com sucesso",
+      });
     } catch (error) {
+      console.error("Erro ao cadastrar administrador:", error);
+
       return res.status(500).json({
         mensagem: "Erro interno do servidor",
         erro: error.message,
       });
     }
   }
+
   static async login(req, res) {
     try {
-      const token = jwt.sign(
-  {
-    id: administrador.id,
-    nome: adminstrador.nome,
-    email: administrador.email,
-  },
-  process.env.JWT_SECRET,
-  {
-    expiresIn: process.env.JWT_TEMPO_EXPIRADO
-  }
-);
       const { email, senha } = req.body;
+
       if (!email || !senha) {
-        return res
-          .status(403)
-          .json({ mensagem: "Forneça o email e senha para login" });
+        return res.status(400).json({
+          mensagem: "Forneça o e-mail e a senha para login",
+        });
       }
-      const administrador = await AdministradorModel.buscarPorEmail(email);
-      if (administrador.length === 0) {
-        return res.status(402).json({ mensagem: "usuário não encontrado" });
+
+      const administradorEncontrado =
+        await AdministradorModel.buscarPorEmail(email);
+
+      /*
+       * Se buscarPorEmail retornar um array, usamos o primeiro registro.
+       * Se retornar diretamente um objeto, usamos o próprio resultado.
+       */
+      const administrador = Array.isArray(administradorEncontrado)
+        ? administradorEncontrado[0]
+        : administradorEncontrado;
+
+      if (!administrador) {
+        return res.status(401).json({
+          mensagem: "E-mail ou senha incorretos",
+        });
       }
+
       if (administrador.ativo === false) {
-        return res.status(403).json({ mensagem: "usuário inativo!" });
+        return res.status(403).json({
+          mensagem: "Usuário inativo",
+        });
       }
-      const verificarSenha = await bcrypt.compareSync(
+
+      const senhaCorreta = await bcrypt.compare(
         senha,
         administrador.senha,
       );
-      if (!verificarSenha) {
-        return res.status(403).json({ mensagem: "email ou senha incorreta!" });
+
+      if (!senhaCorreta) {
+        return res.status(401).json({
+          mensagem: "E-mail ou senha incorretos",
+        });
       }
-    } catch (error) {}
+
+      if (!process.env.JWT_SECRET) {
+        throw new Error("A variável JWT_SECRET não foi configurada");
+      }
+
+      const token = jwt.sign(
+        {
+          id: administrador.id,
+          nome: administrador.nome,
+          email: administrador.email,
+        },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: process.env.JWT_TEMPO_EXPIRADO || "1h",
+        },
+      );
+
+      return res.status(200).json({
+        mensagem: "Login realizado com sucesso",
+        token,
+        administrador: {
+          id: administrador.id,
+          nome: administrador.nome,
+          email: administrador.email,
+        },
+      });
+    } catch (error) {
+      console.error("Erro no login:", error);
+
+      return res.status(500).json({
+        mensagem: "Erro interno do servidor",
+        erro: error.message,
+      });
+    }
   }
-  static async perfil(req, res){
-    
+
+  static async perfil(req, res) {
+    try {
+      return res.status(200).json({
+        mensagem: "Perfil do administrador",
+        administrador: req.administrador,
+      });
+    } catch (error) {
+      console.error("Erro ao buscar perfil:", error);
+
+      return res.status(500).json({
+        mensagem: "Erro interno do servidor",
+        erro: error.message,
+      });
+    }
   }
 }
+
 export default AdministradorController

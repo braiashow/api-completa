@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "description": "API REST desenvolvida com **Node.js**, **Express** e **PostgreSQL** utilizando o padrão arquitetural **MVC (Model-View-Controller)** para gerenciamento de embarcações.",
   "main": "index.js",
+  "type": "module",
   "directories": {
     "doc": "docs"
+    
   },
   "scripts": {
     "start": "node --watch src/index.js",

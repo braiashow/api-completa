@@ -17,4 +17,4 @@ try {
 } catch (error) {
   console.error({mensagem: "Erro ao iniciar banco", erro: error.message})  
 }
-export default conexao
+export default conexao;

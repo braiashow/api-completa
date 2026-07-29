@@ -4,165 +4,166 @@ import jwt from "jsonwebtoken";
 import AdministradorModel from "../models/administrador.model.js";
 
 class AdministradorController {
-  static async cadastrar(req, res) {
-    try {
-      const { id, nome, email, senha } = req.body;
+    /**
+     * Cadastro inicial do administrador
+     *
+     * O sistema permite somente um administrador. Antes de salvar,
+     * validamos os dados e transformamos a senha em um hash irreversivel.
+     * Assim, a senha original nunca e armazenada no banco.
+     */
+    static async cadastrar(req, res) {
+        try {
+            const { nome, email, senha } = req.body;
 
-      if (!id || !nome || !email || !senha) {
-        return res.status(400).json({
-          mensagem: "Todos os campos são obrigatórios",
-        });
-      }
+            if (!nome || !email || !senha) {
+                return res.status(400).json({
+                    mensagem: "Todos os campos sao obrigatorios!"
+                });
+            }
 
-      if (senha.length < 8) {
-        return res.status(400).json({
-          mensagem: "A senha de administrador precisa ter no mínimo 8 caracteres",
-        });
-      }
+            const totalAdmin = await AdministradorModel.contarAdmins();
+            if (totalAdmin > 0) {
+                return res.status(409).json({
+                    mensagem: "Administrador ja cadastrado!"
+                });
+            }
 
-      const regexSenha =
-        /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,32}$/;
+            if (senha.length < 8) {
+                return res.status(400).json({
+                    mensagem: "A senha deve ter no minimo 8 caracteres!"
+                });
+            }
 
-      if (!regexSenha.test(senha)) {
-        return res.status(400).json({
-          mensagem:
-            "Senha inválida! A senha deve conter pelo menos uma letra maiúscula, uma letra minúscula, um número e um caractere especial.",
-        });
-      }
+            const regexSenha = /^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,32}$/;
+            if (!regexSenha.test(senha)) {
+                return res.status(400).json({
+                    mensagem: "Senha invalida! Use letra maiuscula, minuscula, numero e caractere especial."
+                });
+            }
 
-      const regexEmail =
-        /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+$/;
+            const regexEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+$/;
+            if (!regexEmail.test(email)) {
+                return res.status(400).json({
+                    mensagem: "E-mail invalido. Forneca um e-mail valido!"
+                });
+            }
 
-      if (!regexEmail.test(email)) {
-        return res.status(400).json({
-          mensagem: "E-mail inválido",
-        });
-      }
+            /**
+             * O numero 10 representa o custo do hash. Quanto maior,
+             * mais trabalhoso fica testar senhas por forca bruta.
+             */
+            const hashSenha = await bcrypt.hash(senha, 10);
+            const administrador = await AdministradorModel.cadastrar(
+                nome,
+                email,
+                hashSenha
+            );
 
-      const totalAdmin = await AdministradorModel.contarAdmins();
-
-      if (totalAdmin > 0) {
-        return res.status(409).json({
-          mensagem: "Já existe um administrador cadastrado",
-        });
-      }
-
-      const hashSenha = await bcrypt.hash(senha, 10);
-
-      await AdministradorModel.cadastrar(
-        id,
-        nome,
-        email,
-        hashSenha,
-      );
-
-      return res.status(201).json({
-        mensagem: "Administrador cadastrado com sucesso",
-      });
-    } catch (error) {
-      console.error("Erro ao cadastrar administrador:", error);
-
-      return res.status(500).json({
-        mensagem: "Erro interno do servidor",
-        erro: error.message,
-      });
+            return res.status(201).json({
+                mensagem: "Usuario administrador criado com sucesso!",
+                administrador
+            });
+        } catch (error) {
+            return res.status(500).json({
+                mensagem: "Erro ao cadastrar administrador!",
+                erro: error.message
+            });
+        }
     }
-  }
 
-  static async login(req, res) {
-    try {
-      const { email, senha } = req.body;
+    /**
+     * Login e criacao do JWT
+     *
+     * A senha enviada nao e descriptografada nem comparada diretamente.
+     * bcrypt.compare calcula o hash e verifica se ele corresponde ao
+     * hash armazenado no banco.
+     */
+    static async login(req, res) {
+        try {
+            const { email, senha } = req.body;
 
-      if (!email || !senha) {
-        return res.status(400).json({
-          mensagem: "Forneça o e-mail e a senha para login",
-        });
-      }
+            if (!email || !senha) {
+                return res.status(400).json({
+                    mensagem: "Forneca o e-mail e a senha para login!"
+                });
+            }
 
-      const administradorEncontrado =
-        await AdministradorModel.buscarPorEmail(email);
+            const administrador = await AdministradorModel.buscarPorEmail(email);
 
-      /*
-       * Se buscarPorEmail retornar um array, usamos o primeiro registro.
-       * Se retornar diretamente um objeto, usamos o próprio resultado.
-       */
-      const administrador = Array.isArray(administradorEncontrado)
-        ? administradorEncontrado[0]
-        : administradorEncontrado;
+            if (!administrador) {
+                return res.status(401).json({
+                    mensagem: "E-mail ou senha incorretos!"
+                });
+            }
 
-      if (!administrador) {
-        return res.status(401).json({
-          mensagem: "E-mail ou senha incorretos",
-        });
-      }
+            if (administrador.ativo === false) {
+                return res.status(403).json({
+                    mensagem: "Administrador inativo!"
+                });
+            }
 
-      if (administrador.ativo === false) {
-        return res.status(403).json({
-          mensagem: "Usuário inativo",
-        });
-      }
+            const senhaCorreta = await bcrypt.compare(senha, administrador.senha);
+            if (!senhaCorreta) {
+                return res.status(401).json({
+                    mensagem: "E-mail ou senha incorretos!"
+                });
+            }
 
-      const senhaCorreta = await bcrypt.compare(
-        senha,
-        administrador.senha,
-      );
+            /**
+             * O payload deve conter apenas informacoes necessarias.
+             * Nunca colocamos senha ou dados sensiveis dentro do JWT,
+             * pois seu conteudo pode ser lido pelo cliente.
+             */
+            const token = jwt.sign(
+                {
+                    id: administrador.id,
+                    nome: administrador.nome,
+                    email: administrador.email
+                },
+                process.env.JWT_SECRET,
+                {
+                    expiresIn: process.env.JWT_TEMPO_EXPIRACAO || "1h"
+                }
+            );
 
-      if (!senhaCorreta) {
-        return res.status(401).json({
-          mensagem: "E-mail ou senha incorretos",
-        });
-      }
-
-      if (!process.env.JWT_SECRET) {
-        throw new Error("A variável JWT_SECRET não foi configurada");
-      }
-
-      const token = jwt.sign(
-        {
-          id: administrador.id,
-          nome: administrador.nome,
-          email: administrador.email,
-        },
-        process.env.JWT_SECRET,
-        {
-          expiresIn: process.env.JWT_TEMPO_EXPIRADO || "1h",
-        },
-      );
-
-      return res.status(200).json({
-        mensagem: "Login realizado com sucesso",
-        token,
-        administrador: {
-          id: administrador.id,
-          nome: administrador.nome,
-          email: administrador.email,
-        },
-      });
-    } catch (error) {
-      console.error("Erro no login:", error);
-
-      return res.status(500).json({
-        mensagem: "Erro interno do servidor",
-        erro: error.message,
-      });
+            return res.status(200).json({
+                mensagem: "Usuario autenticado com sucesso!",
+                token
+            });
+        } catch (error) {
+            return res.status(500).json({
+                mensagem: "Erro interno ao efetuar login!",
+                erro: error.message
+            });
+        }
     }
-  }
 
-  static async perfil(req, res) {
-    try {
-      return res.status(200).json({
-        mensagem: "Perfil do administrador",
-        administrador: req.administrador,
-      });
-    } catch (error) {
-      console.error("Erro ao buscar perfil:", error);
+    /**
+     * Perfil protegido
+     *
+     * O middleware valida o token antes deste metodo e coloca o payload
+     * em requisicao.administrador. Usamos o id do token em vez de aceitar
+     * um e-mail pela URL, impedindo que um usuario escolha outro perfil.
+     */
+    static async perfil(req, res) {
+        try {
+            const idDoToken = req.administrador.id;
+            const administrador = await AdministradorModel.buscarPerfilPorId(idDoToken);
 
-      return res.status(500).json({
-        mensagem: "Erro interno do servidor",
-        erro: error.message,
-      });
+            if (!administrador) {
+                return res.status(404).json({
+                    mensagem: "Usuario nao encontrado!"
+                });
+            }
+
+            return res.status(200).json(administrador);
+        } catch (error) {
+            return res.status(500).json({
+                mensagem: "Erro ao buscar perfil do usuario!",
+                erro: error.message
+            });
+        }
     }
-  }
 }
 
-export default AdministradorController
+export default AdministradorController;

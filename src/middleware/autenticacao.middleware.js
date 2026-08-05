@@ -14,7 +14,7 @@ class AutenticacaoMiddleware {
      * durante o login. Esse payload e salvo em requisicao.administrador
      * para que os proximos middlewares e controllers possam utiliza-lo.
      */
-    static autenticar(req, res, next) {
+    static autenticar(req, res, proximo) {
         const autorizacao = req.headers.authorization;
 
         /**

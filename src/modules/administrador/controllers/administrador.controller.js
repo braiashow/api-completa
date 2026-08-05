@@ -1,6 +1,5 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-
 import AdministradorModel from "../models/administrador.model.js";
 
 class AdministradorController {
@@ -21,13 +20,13 @@ class AdministradorController {
                 });
             }
 
-            const totalAdmin = await AdministradorModel.contarAdmins();
-            if (totalAdmin > 0) {
+            const totalAdmin = await AdministradorModel.verificaAdminsAtivos();
+            if (totalAdmin > 0 ) {
                 return res.status(409).json({
-                    mensagem: "Administrador ja cadastrado!"
+                    mensagem: "Existe um administrador cadastrado e ativo no sistema!"
                 });
             }
-
+            
             if (senha.length < 8) {
                 return res.status(400).json({
                     mensagem: "A senha deve ter no minimo 8 caracteres!"
@@ -122,7 +121,7 @@ class AdministradorController {
                 },
                 process.env.JWT_SECRET,
                 {
-                    expiresIn: process.env.JWT_TEMPO_EXPIRACAO || "1h"
+                    expiresIn: process.env.JWT_TEMPO_EXPIRACAO
                 }
             );
 
@@ -147,7 +146,7 @@ class AdministradorController {
      */
     static async perfil(req, res) {
         try {
-            const idDoToken = req.administrador.id;
+            const idDoToken = req.usuario.id;
             const administrador = await AdministradorModel.buscarPerfilPorId(idDoToken);
 
             if (!administrador) {

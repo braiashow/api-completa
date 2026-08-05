@@ -1,5 +1,7 @@
 import { Router } from "express";
 import AdministradorController from "../controllers/administrador.controller.js";
+import AutenticacaoMiddleware from "../../../middleware/autenticacao.middleware.js";
+
 
 const routerAdmin = Router();
 

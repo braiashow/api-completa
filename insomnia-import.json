@@ -1,0 +1,224 @@
+{
+  "_type": "export",
+  "__export_format__": 4,
+  "__export_date": "2026-08-04T00:00:00.000Z",
+  "__export_source__": "insomnia.desktop.app:2026.1.0",
+  "__export_format_version__": 1,
+  "resources": [
+    {
+      "_id": "wrk_api_embarcacoes",
+      "_type": "workspace",
+      "name": "API Embarcações",
+      "description": "Importação de rotas da API de Embarcações",
+      "scope": "collection"
+    },
+    {
+      "_id": "fld_root",
+      "_type": "request_group",
+      "parentId": "wrk_api_embarcacoes",
+      "name": "Root",
+      "description": "Rotas de saúde / root"
+    },
+    {
+      "_id": "fld_admin",
+      "_type": "request_group",
+      "parentId": "wrk_api_embarcacoes",
+      "name": "Admin",
+      "description": "Rotas de administrador"
+    },
+    {
+      "_id": "fld_embarcacoes",
+      "_type": "request_group",
+      "parentId": "wrk_api_embarcacoes",
+      "name": "Embarcações",
+      "description": "Rotas de embarcações"
+    },
+    {
+      "_id": "req_root",
+      "_type": "request",
+      "parentId": "fld_root",
+      "name": "GET /",
+      "method": "GET",
+      "url": "http://localhost:3000/",
+      "headers": [],
+      "body": {
+        "mimeType": "application/json",
+        "text": ""
+      }
+    },
+    {
+      "_id": "req_admin_cadastrar",
+      "_type": "request",
+      "parentId": "fld_admin",
+      "name": "POST /admin/cadastrar",
+      "method": "POST",
+      "url": "http://localhost:3000/admin/cadastrar",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Administrador Teste\",\n  \"email\": \"admin@exemplo.com\",\n  \"senha\": \"SenhaForte@123\"\n}"
+      }
+    },
+    {
+      "_id": "req_admin_login",
+      "_type": "request",
+      "parentId": "fld_admin",
+      "name": "POST /admin/login",
+      "method": "POST",
+      "url": "http://localhost:3000/admin/login",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"admin@exemplo.com\",\n  \"senha\": \"SenhaForte@123\"\n}"
+      }
+    },
+    {
+      "_id": "req_admin_perfil",
+      "_type": "request",
+      "parentId": "fld_admin",
+      "name": "GET /admin/perfil",
+      "method": "GET",
+      "url": "http://localhost:3000/admin/perfil",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer <TOKEN_JWT_AQUI>"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": ""
+      }
+    },
+    {
+      "_id": "req_embarcacoes_listar",
+      "_type": "request",
+      "parentId": "fld_embarcacoes",
+      "name": "GET /embarcacoes/listar",
+      "method": "GET",
+      "url": "http://localhost:3000/embarcacoes/listar",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer <TOKEN_JWT_AQUI>"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": ""
+      }
+    },
+    {
+      "_id": "req_embarcacoes_cadastrar",
+      "_type": "request",
+      "parentId": "fld_embarcacoes",
+      "name": "POST /embarcacoes/cadastrar",
+      "method": "POST",
+      "url": "http://localhost:3000/embarcacoes/cadastrar",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer <TOKEN_JWT_AQUI>"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"numPat\": \"12345\",\n  \"nome\": \"Barco Teste\",\n  \"tipo\": \"Lancha\",\n  \"situacao\": \"Ativa\"\n}"
+      }
+    },
+    {
+      "_id": "req_embarcacoes_atualizar_total",
+      "_type": "request",
+      "parentId": "fld_embarcacoes",
+      "name": "PUT /embarcacoes/atualizar/total",
+      "method": "PUT",
+      "url": "http://localhost:3000/embarcacoes/atualizar/total",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer <TOKEN_JWT_AQUI>"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"numPat\": \"12345\",\n  \"nome\": \"Barco Atualizado\",\n  \"tipo\": \"Veleiro\",\n  \"situacao\": \"Em manutenção\"\n}"
+      }
+    },
+    {
+      "_id": "req_embarcacoes_atualizar_parcial",
+      "_type": "request",
+      "parentId": "fld_embarcacoes",
+      "name": "PATCH /embarcacoes/atualizar/parcial/:numPat",
+      "method": "PATCH",
+      "url": "http://localhost:3000/embarcacoes/atualizar/parcial/12345",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer <TOKEN_JWT_AQUI>"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nome\": \"Barco Parcial\",\n  \"situacao\": \"Ativa\"\n}"
+      }
+    },
+    {
+      "_id": "req_embarcacoes_excluir_numPat",
+      "_type": "request",
+      "parentId": "fld_embarcacoes",
+      "name": "DELETE /embarcacoes/excluir/:numPat",
+      "method": "DELETE",
+      "url": "http://localhost:3000/embarcacoes/excluir/12345",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer <TOKEN_JWT_AQUI>"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": ""
+      }
+    },
+    {
+      "_id": "req_embarcacoes_excluir_todos",
+      "_type": "request",
+      "parentId": "fld_embarcacoes",
+      "name": "DELETE /embarcacoes/excluir/todos",
+      "method": "DELETE",
+      "url": "http://localhost:3000/embarcacoes/excluir/todos",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer <TOKEN_JWT_AQUI>"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": ""
+      }
+    }
+  ]
+}

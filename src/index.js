@@ -21,7 +21,7 @@ app.get("/", (req, res) => {
     versao: "1.0.0",
     autor: "Ádson Pablo Moreira Barbosa",
     email: "braiashow@gmail.com",
-    data: new Date().toLocaleDateString("pt-BR", { toLocaleString: "America/Recife" })
+    data: new Date().toLocaleDateString("pt-BR", { toLocalTimeString: "America/Recife" })
   });
 });
 
